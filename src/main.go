@@ -116,7 +116,6 @@ func TibiaDataInitializer() {
 
 	// Setting TibiaDataProxyDomain
 	if isEnvExist("TIBIADATA_PROXY") {
-
 		TibiaDataProxyProtocol := getEnv("TIBIADATA_PROXY_PROTOCOL", "https")
 		switch TibiaDataProxyProtocol {
 		case "http":
@@ -129,19 +128,39 @@ func TibiaDataInitializer() {
 
 	// Configuração do Redis para cache
 	if getEnvAsBool("REDIS_ENABLED", false) {
-		redisAddr := getEnv("REDIS_ADDR", "localhost:6379")
-		redisPassword := getEnv("REDIS_PASSWORD", "")
-		redisDB := getEnvAsInt("REDIS_DB", 0)
-		
-		// Inicializa o cliente Redis
-		cache.Setup(redisAddr, redisPassword, redisDB)
-		
-		// Teste a conexão
-		_, err := cache.Client.Ping(cache.Ctx).Result()
-		if err != nil {
-			log.Printf("[warning] TibiaData API Redis cache connection failed: %v", err)
+		// Verificar se existe URL Redis
+		if isEnvExist("REDIS_URL") {
+			redisURL := getEnv("REDIS_URL", "")
+
+			// Inicializa o cliente Redis com URL
+			err := cache.SetupWithURL(redisURL)
+			if err != nil {
+				log.Printf("[warning] TibiaData API Redis cache connection failed to parse URL: %v", err)
+			} else {
+				// Teste a conexão
+				_, err := cache.Client.Ping(cache.Ctx).Result()
+				if err != nil {
+					log.Printf("[warning] TibiaData API Redis cache connection failed: %v", err)
+				} else {
+					log.Printf("[info] TibiaData API Redis cache enabled using URL: %s", redisURL)
+				}
+			}
 		} else {
-			log.Printf("[info] TibiaData API Redis cache enabled: %s DB %d", redisAddr, redisDB)
+			// Configuração com parâmetros separados (código existente)
+			redisAddr := getEnv("REDIS_ADDR", "localhost:6379")
+			redisPassword := getEnv("REDIS_PASSWORD", "")
+			redisDB := getEnvAsInt("REDIS_DB", 0)
+
+			// Inicializa o cliente Redis
+			cache.Setup(redisAddr, redisPassword, redisDB)
+
+			// Teste a conexão
+			_, err := cache.Client.Ping(cache.Ctx).Result()
+			if err != nil {
+				log.Printf("[warning] TibiaData API Redis cache connection failed: %v", err)
+			} else {
+				log.Printf("[info] TibiaData API Redis cache enabled: %s DB %d", redisAddr, redisDB)
+			}
 		}
 	} else {
 		log.Printf("[info] TibiaData API Redis cache disabled")

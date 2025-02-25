@@ -2,6 +2,7 @@ package cache
 
 import (
 	"context"
+	"encoding/json"
 	"time"
 
 	"github.com/go-redis/redis/v8"
@@ -21,6 +22,17 @@ func Setup(addr, password string, db int) {
 		Password: password,
 		DB:       db,
 	})
+}
+
+// SetupWithURL inicializa o cliente Redis a partir de uma URL
+func SetupWithURL(redisURL string) error {
+	options, err := redis.ParseURL(redisURL)
+	if err != nil {
+		return err
+	}
+
+	Client = redis.NewClient(options)
+	return nil
 }
 
 // Get retorna um valor do cache
@@ -43,19 +55,39 @@ func FlushAll() error {
 	return Client.FlushAll(Ctx).Err()
 }
 
-// GetTTL retorna o TTL recomendado para diferentes tipos de dados
+// GetCached verifica se um item existe no cache e o retorna deserializado se encontrado
+func GetCached(key string, result interface{}) (bool, error) {
+	if Client == nil {
+		return false, nil // Cache está desabilitado
+	}
+
+	cachedData, err := Client.Get(Ctx, key).Result()
+	if err == redis.Nil {
+		return false, nil // Chave não existe no cache
+	} else if err != nil {
+		return false, err // Erro de conexão ou outro problema
+	}
+
+	// Deserializar o JSON no tipo fornecido
+	if err := json.Unmarshal([]byte(cachedData), result); err != nil {
+		return false, err
+	}
+
+	return true, nil // Cache hit
+}
+
 // GetTTL retorna o TTL recomendado para diferentes tipos de dados
 func GetTTL(dataType string) time.Duration {
-    switch dataType {
-    case "character":
-        return 15 * time.Second
-    case "world":
-        return 1 * time.Second
-    case "guild":
-        return 15 * time.Second
-    case "highscores":
-        return 5 * time.Minute
-    default:
-        return 5 * time.Second
-    }
+	switch dataType {
+	case "character":
+		return 15 * time.Second
+	case "world":
+		return 1 * time.Second
+	case "guild":
+		return 15 * time.Second
+	case "highscores":
+		return 5 * time.Minute
+	default:
+		return 5 * time.Second
+	}
 }
