@@ -1,0 +1,39 @@
+name: codecov.io
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  codecov:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Connect to Tailnet
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+        uses: tailscale/github-action@v3
+        with:
+          args: --accept-dns=true
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:github-runner
+          version: latest
+
+      - name: Runing tests for coverage
+        run: |
+          go test -race -coverprofile=coverage.out -covermode=atomic `go list ./... | grep -v vendor/` -v
+
+      - name: Uploading coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
