@@ -20,7 +20,7 @@ RUN go mod download && \
   -X 'main.TibiaDataBuildBuilder=${TibiaDataBuildBuilder}' \
   -X 'main.TibiaDataBuildRelease=${TibiaDataBuildRelease}' \
   -X 'main.TibiaDataBuildCommit=${TibiaDataBuildCommit}' \
-  " -o app ./...
+  " -o app ./src/main.go
 
 
 # get alpine container
