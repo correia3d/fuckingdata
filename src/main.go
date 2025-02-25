@@ -2,8 +2,10 @@ package main
 
 import (
 	"log"
+	"strconv"
 	"sync/atomic"
 
+	"github.com/TibiaData/tibiadata-api-go/src/cache" // Novo pacote de cache
 	"github.com/TibiaData/tibiadata-api-go/src/validation"
 )
 
@@ -91,6 +93,15 @@ func main() {
 	runWebServer()
 }
 
+// getEnvAsInt retorna o valor de uma variável de ambiente como inteiro
+func getEnvAsInt(key string, defaultVal int) int {
+	valueStr := getEnv(key, "")
+	if value, err := strconv.Atoi(valueStr); err == nil {
+		return value
+	}
+	return defaultVal
+}
+
 // TibiaDataInitializer set the background for the webserver
 func TibiaDataInitializer() {
 	// Setting TibiaDataBuildEdition
@@ -114,6 +125,26 @@ func TibiaDataInitializer() {
 
 		TibiaDataProxyDomain = TibiaDataProxyProtocol + "://" + getEnv("TIBIADATA_PROXY", "www.tibia.com") + "/"
 		log.Printf("[info] TibiaData API proxy: %s", TibiaDataProxyDomain)
+	}
+
+	// Configuração do Redis para cache
+	if getEnvAsBool("REDIS_ENABLED", false) {
+		redisAddr := getEnv("REDIS_ADDR", "localhost:6379")
+		redisPassword := getEnv("REDIS_PASSWORD", "")
+		redisDB := getEnvAsInt("REDIS_DB", 0)
+		
+		// Inicializa o cliente Redis
+		cache.Setup(redisAddr, redisPassword, redisDB)
+		
+		// Teste a conexão
+		_, err := cache.Client.Ping(cache.Ctx).Result()
+		if err != nil {
+			log.Printf("[warning] TibiaData API Redis cache connection failed: %v", err)
+		} else {
+			log.Printf("[info] TibiaData API Redis cache enabled: %s DB %d", redisAddr, redisDB)
+		}
+	} else {
+		log.Printf("[info] TibiaData API Redis cache disabled")
 	}
 
 	// Run some functions that are empty but required for documentation to be done
@@ -142,5 +173,4 @@ func TibiaDataInitializer() {
 	_ = tibiaSpellsSpellV3()
 	_ = tibiaWorldsOverviewV3()
 	_ = tibiaWorldsWorldV3()
-
 }

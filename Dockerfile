@@ -44,5 +44,11 @@ COPY --from=builder --chown=nonroot:nonroot --chmod=544 /go/src/app .
 # expose port 8080
 EXPOSE 8080
 
+# set environment variables for Redis
+ENV REDIS_ENABLED=false
+ENV REDIS_ADDR=redis:6379
+ENV REDIS_PASSWORD=
+ENV REDIS_DB=0
+
 # run application
 CMD ["./app"]
