@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"math/rand"
 	"net/http"
 	"os"
 	"os/signal"
@@ -24,6 +25,19 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/go-resty/resty/v2"
 )
+
+// Add these cache-busting functions
+func generateCacheBuster() string {
+	return "imsexy=" + strconv.FormatInt(time.Now().UnixNano(), 10) + strconv.Itoa(rand.Intn(1000000))
+}
+
+func addCacheBusterToURL(url string) string {
+	separator := "?"
+	if strings.Contains(url, "?") {
+		separator = "&"
+	}
+	return url + separator + generateCacheBuster()
+}
 
 var (
 	// TibiaData app resty vars
@@ -269,7 +283,7 @@ func runWebServer() {
 func tibiaBoostableBosses(c *gin.Context) {
 	tibiadataRequest := TibiaDataRequestStruct{
 		Method:  resty.MethodGet,
-		URL:     "https://www.tibia.com/library/?subtopic=boostablebosses",
+		URL:     addCacheBusterToURL("https://www.tibia.com/library/?subtopic=boostablebosses"),
 		RawBody: true,
 	}
 
@@ -321,9 +335,10 @@ func tibiaCharactersCharacter(c *gin.Context) {
 	}
 
 	// Cache miss or error, proceed with normal request
+	// Note: Now using addCacheBusterToURL to add cache busting parameter
 	tibiadataRequest := TibiaDataRequestStruct{
 		Method: resty.MethodGet,
-		URL:    "https://www.tibia.com/community/?subtopic=characters&name=" + TibiaDataQueryEscapeString(name),
+		URL:    addCacheBusterToURL("https://www.tibia.com/community/?subtopic=characters&name=" + TibiaDataQueryEscapeString(name)),
 	}
 
 	tibiaDataRequestHandler(

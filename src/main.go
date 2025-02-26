@@ -2,8 +2,10 @@ package main
 
 import (
 	"log"
+	"math/rand" // Add this import
 	"strconv"
 	"sync/atomic"
+	"time" // Add this import
 
 	"github.com/TibiaData/tibiadata-api-go/src/cache" // Novo pacote de cache
 	"github.com/TibiaData/tibiadata-api-go/src/validation"
@@ -50,6 +52,9 @@ var (
 // @BasePath  /
 
 func init() {
+	// Initialize random seed for cache busting
+	rand.Seed(time.Now().UnixNano())
+
 	// Generating TibiaDataUserAgent with TibiaDataUserAgentGenerator function
 	TibiaDataUserAgent = TibiaDataUserAgentGenerator(TibiaDataAPIversion)
 
