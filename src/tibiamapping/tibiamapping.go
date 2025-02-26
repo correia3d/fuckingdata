@@ -18,13 +18,13 @@ type TibiaMapping struct {
 
 const (
 	// tibiaAssetsDataMinJsonURL is the endpoint to get the data.min.json file
-	tibiaAssetsDataMinJsonURL = "http://assets.tibiadata.com/data.min.json"
+	tibiaAssetsDataMinJsonURL = "https://assets.tibiadata.com/data.min.json"
 
 	// tibiaAssetsSha256SumURL is the endpoint to get the sha256sum.txt file
-	tibiaAssetsSha256SumURL = "http://assets.tibiadata.com/sha256sum.txt"
+	tibiaAssetsSha256SumURL = "https://assets.tibiadata.com/sha256sum.txt"
 
 	// tibiaAssetsSha512SumURL is the endpoint to get the sha512sum.txt file
-	tibiaAssetsSha512SumURL = "http://assets.tibiadata.com/sha512sum.txt"
+	tibiaAssetsSha512SumURL = "https://assets.tibiadata.com/sha512sum.txt"
 )
 
 // Run is used to load data from the assets JSON file
