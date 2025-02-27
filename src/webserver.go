@@ -482,9 +482,10 @@ func tibiaGuildsGuild(c *gin.Context) {
 		}
 	}
 
+	// Add cache buster to URL
 	tibiadataRequest := TibiaDataRequestStruct{
 		Method: resty.MethodGet,
-		URL:    "https://www.tibia.com/community/?subtopic=guilds&page=view&GuildName=" + TibiaDataQueryEscapeString(guild),
+		URL:    addCacheBusterToURL("https://www.tibia.com/community/?subtopic=guilds&page=view&GuildName=" + TibiaDataQueryEscapeString(guild)),
 	}
 
 	tibiaDataRequestHandler(
