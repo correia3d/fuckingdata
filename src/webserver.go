@@ -27,7 +27,7 @@ import (
 )
 
 func generateCacheBuster() string {
-	return "imsexy=" + strconv.FormatInt(time.Now().UnixNano(), 10) + strconv.Itoa(rand.Intn(1000000))
+	return "plsno=" + strconv.FormatInt(time.Now().UnixNano(), 10) + strconv.Itoa(rand.Intn(1000000))
 }
 
 func addCacheBusterToURL(url string) string {
@@ -1163,9 +1163,10 @@ func tibiaWorldsWorld(c *gin.Context) {
 	}
 
 	// Continue with normal request
+	// Usando addCacheBusterToURL para adicionar parâmetro de cache busting
 	tibiadataRequest := TibiaDataRequestStruct{
 		Method: resty.MethodGet,
-		URL:    "https://www.tibia.com/community/?subtopic=worlds&world=" + TibiaDataQueryEscapeString(world) + "&sup",
+		URL:    addCacheBusterToURL("https://www.tibia.com/community/?subtopic=worlds&world=" + TibiaDataQueryEscapeString(world)),
 	}
 
 	tibiaDataRequestHandler(
