@@ -26,7 +26,6 @@ import (
 	"github.com/go-resty/resty/v2"
 )
 
-// Add these cache-busting functions
 func generateCacheBuster() string {
 	return "imsexy=" + strconv.FormatInt(time.Now().UnixNano(), 10) + strconv.Itoa(rand.Intn(1000000))
 }
@@ -1166,7 +1165,7 @@ func tibiaWorldsWorld(c *gin.Context) {
 	// Continue with normal request
 	tibiadataRequest := TibiaDataRequestStruct{
 		Method: resty.MethodGet,
-		URL:    "https://www.tibia.com/community/?subtopic=worlds&world=" + TibiaDataQueryEscapeString(world),
+		URL:    "https://www.tibia.com/community/?subtopic=worlds&world=" + TibiaDataQueryEscapeString(world) + "&sup",
 	}
 
 	tibiaDataRequestHandler(
