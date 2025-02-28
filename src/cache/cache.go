@@ -82,7 +82,7 @@ func GetTTL(dataType string) time.Duration {
 	case "character":
 		return 30 * time.Second
 	case "world":
-		return 15 * time.Second
+		return 5 * time.Second
 	case "guild":
 		return 10 * time.Second
 	case "highscores":
