@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -295,6 +296,15 @@ func tibiaBoostableBosses(c *gin.Context) {
 		"TibiaBoostableBosses")
 }
 
+// Definindo o pool de workers em escopo global
+var characterWorkerPool chan struct{}
+
+// Inicialize no início da aplicação (por exemplo, na função main)
+func init() {
+	// Ajuste o número 50 para o valor adequado para seu ambiente
+	characterWorkerPool = make(chan struct{}, 50)
+}
+
 // Character godoc
 // @Summary      Show one character
 // @Description  Show all information about one character available
@@ -329,30 +339,67 @@ func tibiaCharactersCharacter(c *gin.Context) {
 				TibiaDataAPIHandleResponse(c, "TibiaCharactersCharacter", data)
 				return
 			}
-			// Se houver erro ao deserializar, continue com a solicitação normal
 		}
 	}
 
-	// Cache miss or error, proceed with normal request
-	// Note: Now using addCacheBusterToURL to add cache busting parameter
-	tibiadataRequest := TibiaDataRequestStruct{
-		Method: resty.MethodGet,
-		URL:    addCacheBusterToURL("https://www.tibia.com/community/?subtopic=characters&name=" + TibiaDataQueryEscapeString(name)),
-	}
+	// Criando um context com timeout para a requisição
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
+	defer cancel()
 
-	tibiaDataRequestHandler(
-		c,
-		tibiadataRequest,
-		func(BoxContentHTML string) (interface{}, error) {
-			data, err := TibiaCharactersCharacterImpl(BoxContentHTML, tibiadataRequest.URL)
-			if err == nil && cache.Client != nil {
-				// Cache the response using the configured TTL
-				jsonData, _ := json.Marshal(data)
-				cache.Set(cacheKey, jsonData, cache.GetTTL("character"))
-			}
-			return data, err
-		},
-		"TibiaCharactersCharacter")
+	// Criando canais para receber o resultado ou erro
+	resultChan := make(chan interface{}, 1)
+	errChan := make(chan error, 1)
+
+	// Enviando a requisição para ser processada por um worker
+	go func() {
+		// Obtendo um slot no pool (bloqueante se o pool estiver cheio)
+		select {
+		case characterWorkerPool <- struct{}{}:
+			// Slot obtido, prosseguir
+			defer func() { <-characterWorkerPool }() // Liberar o slot quando terminar
+		case <-ctx.Done():
+			// Timeout ao esperar por um slot
+			errChan <- errors.New("server too busy, try again later")
+			return
+		}
+
+		// Cache miss or error, proceed with normal request
+		// Note: Using addCacheBusterToURL to add cache busting parameter
+		tibiadataRequest := TibiaDataRequestStruct{
+			Method: resty.MethodGet,
+			URL:    addCacheBusterToURL("https://www.tibia.com/community/?subtopic=characters&name=" + TibiaDataQueryEscapeString(name)),
+		}
+
+		BoxContentHTML, err := TibiaDataHTMLDataCollector(tibiadataRequest)
+		if err != nil {
+			errChan <- err
+			return
+		}
+
+		data, err := TibiaCharactersCharacterImpl(BoxContentHTML, tibiadataRequest.URL)
+		if err != nil {
+			errChan <- err
+			return
+		}
+
+		if cache.Client != nil {
+			// Cache the response using the configured TTL
+			jsonData, _ := json.Marshal(data)
+			cache.Set(cacheKey, jsonData, cache.GetTTL("character"))
+		}
+
+		resultChan <- data
+	}()
+
+	// Esperando por resultado, erro ou timeout
+	select {
+	case result := <-resultChan:
+		TibiaDataAPIHandleResponse(c, "TibiaCharactersCharacter", result)
+	case err := <-errChan:
+		TibiaDataErrorHandler(c, err, 0)
+	case <-ctx.Done():
+		TibiaDataErrorHandler(c, errors.New("request timed out"), http.StatusRequestTimeout)
+	}
 }
 
 // Creatures godoc
