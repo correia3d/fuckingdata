@@ -343,7 +343,7 @@ func tibiaCharactersCharacter(c *gin.Context) {
 	}
 
 	// Criando um context com timeout para a requisição
-	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 17*time.Second)
 	defer cancel()
 
 	// Criando canais para receber o resultado ou erro
