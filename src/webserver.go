@@ -301,8 +301,8 @@ var characterWorkerPool chan struct{}
 
 // Inicialize no início da aplicação (por exemplo, na função main)
 func init() {
-	// Ajuste o número 50 para o valor adequado para seu ambiente
-	characterWorkerPool = make(chan struct{}, 50)
+	// Ajuste o número para o valor adequado para seu ambiente
+	characterWorkerPool = make(chan struct{}, 10)
 }
 
 // Character godoc
