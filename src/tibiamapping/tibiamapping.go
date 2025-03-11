@@ -1,9 +1,11 @@
 package tibiamapping
 
 import (
+	"crypto/tls"
 	"fmt"
 	"log"
 	"net/http"
+	"net/url"
 	"time"
 
 	"github.com/go-resty/resty/v2"
@@ -28,14 +30,14 @@ const (
 )
 
 // Run is used to load data from the assets JSON file
-func Run(userAgent string) (TibiaMapping, error) {
+func Run(userAgent string, proxyURL string) (TibiaMapping, error) {
 	// Logging the start of tibiamapping
 	log.Println("[info] Tibia Mapping is running")
 
 	// Setting up resty client
 	client := resty.New()
 
-	// Set client timeout  and retry
+	// Set client timeout and retry
 	client.SetTimeout(5 * time.Second)
 	client.SetRetryCount(2)
 
@@ -44,6 +46,27 @@ func Run(userAgent string) (TibiaMapping, error) {
 		"Content-Type": "application/json",
 		"User-Agent":   userAgent,
 	})
+
+	// Configure proxy with TLS verification disabled
+	if proxyURL != "" {
+		// Parse proxy URL
+		parsedURL, err := url.Parse(proxyURL)
+		if err != nil {
+			return TibiaMapping{}, fmt.Errorf("invalid proxy URL: %v", err)
+		}
+
+		// Create custom transport with proxy and TLS verification disabled
+		transport := &http.Transport{
+			Proxy: http.ProxyURL(parsedURL),
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: true, // Ignora verificação de certificado
+			},
+		}
+
+		// Use the custom transport with resty client
+		client.SetTransport(transport)
+		log.Printf("[info] Using proxy: %s", proxyURL)
+	}
 
 	// Enabling Content length value for all request
 	client.SetContentLength(true)
@@ -69,8 +92,8 @@ func Run(userAgent string) (TibiaMapping, error) {
 	}
 
 	// Checking if the response code was OK
-	if res.StatusCode() != http.StatusOK {
-		return TibiaMapping{}, fmt.Errorf("sha256 status code %d", res.StatusCode())
+	if sha256.StatusCode() != http.StatusOK {
+		return TibiaMapping{}, fmt.Errorf("sha256 status code %d", sha256.StatusCode())
 	}
 
 	// Making the GET request to the sha512 file
@@ -80,8 +103,8 @@ func Run(userAgent string) (TibiaMapping, error) {
 	}
 
 	// Checking if the response code was OK
-	if res.StatusCode() != http.StatusOK {
-		return TibiaMapping{}, fmt.Errorf("sha512 status code %d", res.StatusCode())
+	if sha512.StatusCode() != http.StatusOK {
+		return TibiaMapping{}, fmt.Errorf("sha512 status code %d", sha512.StatusCode())
 	}
 
 	// Log that Tibia Mapping has been successfully completed
