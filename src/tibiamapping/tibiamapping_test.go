@@ -20,18 +20,9 @@ func TestFakeTest(t *testing.T) {
 }
 
 func TestInitiator(t *testing.T) {
-	// Teste sem proxy
-	mapping, err := Run("TibiaData-API/v4/testing", "")
+	mapping, err := Run("TibiaData-API/v4/testing")
 	if err != nil {
-		t.Log("Teste sem proxy falhou, tentando com proxy")
-
-		// Teste com proxy
-		// Ajuste o endereço do proxy para o endereço correto do seu servidor Mubeng
-		proxyURL := "http://167.114.169.81:8020" // Substitua pelo endereço real
-		mapping, err = Run("TibiaData-API/v4/testing", proxyURL)
-		if err != nil {
-			t.Fatal(err)
-		}
+		t.Fatal(err)
 	}
 
 	if len(mapping.RawData) == 0 {
