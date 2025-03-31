@@ -363,4 +363,5 @@ func TestTibiaCharactersCharacterConcurrency(t *testing.T) {
 	// Verificar resultados
 	t.Logf("%d de %d requisições foram bem-sucedidas", successCount, numRequests)
 	assert.True(successCount > 0, "Pelo menos algumas requisições deveriam ser bem-sucedidas")
+
 }

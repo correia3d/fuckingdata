@@ -13,6 +13,7 @@ import (
 	"os/signal"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/TibiaData/tibiadata-api-go/src/cache"
@@ -45,6 +46,13 @@ var (
 
 	// ErrorNotFound will be returned if the requests ends up in a 404
 	ErrorNotFound = errors.New("page not found")
+)
+
+// Adicione estas variáveis globais no início do arquivo webserver.go, junto com as outras variáveis globais
+var (
+	// Mapa para rastrear requisições de personagens em andamento
+	pendingCharacterRequests = make(map[string]chan interface{})
+	pendingMutex             = &sync.RWMutex{}
 )
 
 // DebugOutInformation wraps OutInformation with some debug info
@@ -342,63 +350,82 @@ func tibiaCharactersCharacter(c *gin.Context) {
 		}
 	}
 
+	// Verificar se já existe uma requisição em andamento para este personagem
+	pendingMutex.RLock()
+	resultChan, hasPendingRequest := pendingCharacterRequests[name]
+	pendingMutex.RUnlock()
+
+	if hasPendingRequest {
+		// Aguardar o resultado da requisição existente
+		ctx, cancel := context.WithTimeout(c.Request.Context(), 17*time.Second)
+		defer cancel()
+
+		select {
+		case result := <-resultChan:
+			TibiaDataAPIHandleResponse(c, "TibiaCharactersCharacter", result)
+			return
+		case <-ctx.Done():
+			TibiaDataErrorHandler(c, errors.New("request timed out while waiting for pending request"), http.StatusRequestTimeout)
+			return
+		}
+	}
+
+	// Criar um canal para esta requisição
+	resultChan = make(chan interface{}, 1)
+	pendingMutex.Lock()
+	pendingCharacterRequests[name] = resultChan
+	pendingMutex.Unlock()
+
+	// Garantir que removemos do mapa quando terminar
+	defer func() {
+		pendingMutex.Lock()
+		delete(pendingCharacterRequests, name)
+		pendingMutex.Unlock()
+		close(resultChan)
+	}()
+
 	// Criando um context com timeout para a requisição
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 17*time.Second)
 	defer cancel()
 
-	// Criando canais para receber o resultado ou erro
-	resultChan := make(chan interface{}, 1)
-	errChan := make(chan error, 1)
+	// Obtendo um slot no pool (bloqueante se o pool estiver cheio)
+	select {
+	case characterWorkerPool <- struct{}{}:
+		// Slot obtido, prosseguir
+		defer func() { <-characterWorkerPool }() // Liberar o slot quando terminar
+	case <-ctx.Done():
+		// Timeout ao esperar por um slot
+		TibiaDataErrorHandler(c, errors.New("server too busy, try again later"), http.StatusServiceUnavailable)
+		return
+	}
 
-	// Enviando a requisição para ser processada por um worker
-	go func() {
-		// Obtendo um slot no pool (bloqueante se o pool estiver cheio)
-		select {
-		case characterWorkerPool <- struct{}{}:
-			// Slot obtido, prosseguir
-			defer func() { <-characterWorkerPool }() // Liberar o slot quando terminar
-		case <-ctx.Done():
-			// Timeout ao esperar por um slot
-			errChan <- errors.New("server too busy, try again later")
-			return
-		}
+	// Cache miss or error, proceed with normal request
+	tibiadataRequest := TibiaDataRequestStruct{
+		Method: resty.MethodGet,
+		URL:    addCacheBusterToURL("https://www.tibia.com/community/?subtopic=characters&name=" + TibiaDataQueryEscapeString(name)),
+	}
 
-		// Cache miss or error, proceed with normal request
-		// Note: Using addCacheBusterToURL to add cache busting parameter
-		tibiadataRequest := TibiaDataRequestStruct{
-			Method: resty.MethodGet,
-			URL:    addCacheBusterToURL("https://www.tibia.com/community/?subtopic=characters&name=" + TibiaDataQueryEscapeString(name)),
-		}
-
-		BoxContentHTML, err := TibiaDataHTMLDataCollector(tibiadataRequest)
-		if err != nil {
-			errChan <- err
-			return
-		}
-
+	BoxContentHTML, err := TibiaDataHTMLDataCollector(tibiadataRequest)
+	if err != nil {
+		TibiaDataErrorHandler(c, err, 0)
+		// Não retorna aqui para que possamos informar também os canais pendentes
+	} else {
 		data, err := TibiaCharactersCharacterImpl(BoxContentHTML, tibiadataRequest.URL)
 		if err != nil {
-			errChan <- err
-			return
+			TibiaDataErrorHandler(c, err, 0)
+		} else {
+			// Armazenar em cache
+			if cache.Client != nil {
+				jsonData, _ := json.Marshal(data)
+				cache.Set(cacheKey, jsonData, cache.GetTTL("character"))
+			}
+
+			// Enviar o resultado para o canal para todos que estão aguardando
+			resultChan <- data
+
+			// Responder ao requisitante atual
+			TibiaDataAPIHandleResponse(c, "TibiaCharactersCharacter", data)
 		}
-
-		if cache.Client != nil {
-			// Cache the response using the configured TTL
-			jsonData, _ := json.Marshal(data)
-			cache.Set(cacheKey, jsonData, cache.GetTTL("character"))
-		}
-
-		resultChan <- data
-	}()
-
-	// Esperando por resultado, erro ou timeout
-	select {
-	case result := <-resultChan:
-		TibiaDataAPIHandleResponse(c, "TibiaCharactersCharacter", result)
-	case err := <-errChan:
-		TibiaDataErrorHandler(c, err, 0)
-	case <-ctx.Done():
-		TibiaDataErrorHandler(c, errors.New("request timed out"), http.StatusRequestTimeout)
 	}
 }
 
