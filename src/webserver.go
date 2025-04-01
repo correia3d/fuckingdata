@@ -314,7 +314,7 @@ func init() {
 }
 
 // Character godoc
-// @Summary      Show one character
+// @Summary      Show one character'
 // @Description  Show all information about one character available
 // @Tags         characters
 // @Accept       json
