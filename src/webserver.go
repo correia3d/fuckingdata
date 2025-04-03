@@ -357,7 +357,7 @@ func tibiaCharactersCharacter(c *gin.Context) {
 
 	if hasPendingRequest {
 		// Aguardar o resultado da requisição existente
-		ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
+		ctx, cancel := context.WithTimeout(c.Request.Context(), 15*time.Second)
 		defer cancel()
 
 		select {
