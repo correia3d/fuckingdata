@@ -80,9 +80,9 @@ func GetCached(key string, result interface{}) (bool, error) {
 func GetTTL(dataType string) time.Duration {
 	switch dataType {
 	case "character":
-		return 5 * time.Second
+		return 10 * time.Second
 	case "world":
-		return 5 * time.Second
+		return 10 * time.Second
 	case "guild":
 		return 10 * time.Second
 	case "highscores":
