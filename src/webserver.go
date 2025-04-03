@@ -29,7 +29,7 @@ import (
 )
 
 func generateCacheBuster() string {
-	return "plsno=" + strconv.FormatInt(time.Now().UnixNano(), 10) + strconv.Itoa(rand.Intn(1000000))
+	return "plseno=" + strconv.FormatInt(time.Now().UnixNano(), 10) + strconv.Itoa(rand.Intn(11514))
 }
 
 func addCacheBusterToURL(url string) string {
@@ -1376,8 +1376,8 @@ func TibiaDataHTMLDataCollector(TibiaDataRequest TibiaDataRequestStruct) (string
 	}
 
 	// Set client timeout  and retry
-	client.SetTimeout(5 * time.Second)
-	client.SetRetryCount(2)
+	client.SetTimeout(2 * time.Second)
+	client.SetRetryCount(3)
 
 	// Set headers for all requests
 	client.SetHeaders(map[string]string{
