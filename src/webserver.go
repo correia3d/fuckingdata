@@ -357,7 +357,7 @@ func tibiaCharactersCharacter(c *gin.Context) {
 
 	if hasPendingRequest {
 		// Aguardar o resultado da requisição existente
-		ctx, cancel := context.WithTimeout(c.Request.Context(), 17*time.Second)
+		ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
 		defer cancel()
 
 		select {
@@ -1377,7 +1377,7 @@ func TibiaDataHTMLDataCollector(TibiaDataRequest TibiaDataRequestStruct) (string
 
 	// Set client timeout  and retry
 	client.SetTimeout(3 * time.Second)
-	client.SetRetryCount(2)
+	client.SetRetryCount(3)
 
 	// Set headers for all requests
 	client.SetHeaders(map[string]string{
