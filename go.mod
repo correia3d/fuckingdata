@@ -11,7 +11,7 @@ replace github.com/TibiaData/tibiadata-api-go/src/validation => ./src/validation
 replace github.com/TibiaData/tibiadata-api-go/src/cache => ./src/cache
 
 require (
-	github.com/PuerkitoBio/goquery v1.10.2
+	github.com/PuerkitoBio/goquery v1.10.3
 	github.com/TibiaData/tibiadata-api-go/src/static v0.0.0-20250214153538-6bdfa7545f05
 	github.com/TibiaData/tibiadata-api-go/src/validation v0.0.0-20250214153538-6bdfa7545f05
 	github.com/gin-contrib/gzip v1.2.2
@@ -20,7 +20,7 @@ require (
 	github.com/go-resty/resty/v2 v2.16.5
 	github.com/mantyr/go-charset v0.0.0-20160510214718-44d054d82c4a
 	github.com/stretchr/testify v1.10.0
-	golang.org/x/text v0.22.0
+	golang.org/x/text v0.24.0
 )
 
 require (
@@ -49,9 +49,9 @@ require (
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.2.12 // indirect
 	golang.org/x/arch v0.14.0 // indirect
-	golang.org/x/crypto v0.33.0 // indirect
-	golang.org/x/net v0.35.0 // indirect
-	golang.org/x/sys v0.30.0 // indirect
+	golang.org/x/crypto v0.37.0 // indirect
+	golang.org/x/net v0.39.0 // indirect
+	golang.org/x/sys v0.32.0 // indirect
 	google.golang.org/protobuf v1.36.5 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
