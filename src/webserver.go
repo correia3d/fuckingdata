@@ -1376,7 +1376,7 @@ func TibiaDataHTMLDataCollector(TibiaDataRequest TibiaDataRequestStruct) (string
 	}
 
 	// Set client timeout  and retry
-	client.SetTimeout(6 * time.Second)
+	client.SetTimeout(5 * time.Second)
 	client.SetRetryCount(2)
 
 	// Set headers for all requests
