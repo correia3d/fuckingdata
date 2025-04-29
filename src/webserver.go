@@ -29,7 +29,7 @@ import (
 )
 
 func generateCacheBuster() string {
-	return "plsenan=" + strconv.FormatInt(time.Now().UnixNano(), 10) + strconv.Itoa(rand.Intn(11514))
+	return "plseno=" + strconv.FormatInt(time.Now().UnixNano(), 10) + strconv.Itoa(rand.Intn(11514))
 }
 
 func addCacheBusterToURL(url string) string {
@@ -385,7 +385,7 @@ func tibiaCharactersCharacter(c *gin.Context) {
 	}()
 
 	// Criando um context com timeout para a requisição
-	ctx, cancel := context.WithTimeout(c.Request.Context(), 16*time.Second)
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 17*time.Second)
 	defer cancel()
 
 	// Obtendo um slot no pool (bloqueante se o pool estiver cheio)
