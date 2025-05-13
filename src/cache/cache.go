@@ -3,6 +3,8 @@ package cache
 import (
 	"context"
 	"encoding/json"
+	"os"      // Adicionado para ler variáveis de ambiente
+	"strconv" // Adicionado para converter string para int
 	"time"
 
 	"github.com/go-redis/redis/v8"
@@ -80,7 +82,15 @@ func GetCached(key string, result interface{}) (bool, error) {
 func GetTTL(dataType string) time.Duration {
 	switch dataType {
 	case "character":
-		return 60 * time.Second
+		// Tenta ler o TTL do character do ambiente
+		ttlStr := os.Getenv("CACHE_TTL_CHARACTER")
+		if ttlStr != "" {
+			ttl, err := strconv.Atoi(ttlStr)
+			if err == nil && ttl > 0 {
+				return time.Duration(ttl) * time.Second
+			}
+		}
+		return 60 * time.Second // valor padrão se não configurado ou inválido
 	case "world":
 		return 10 * time.Second
 	case "guild":
