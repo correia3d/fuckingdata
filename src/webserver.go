@@ -29,7 +29,27 @@ import (
 )
 
 func generateCacheBuster() string {
-	return "heya=" + strconv.FormatInt(time.Now().UnixNano(), 10) + strconv.Itoa(rand.Intn(11514))
+	// Palavra base
+	palavra := "euamooduarte"
+
+	// Comprimento desejado para o nome do parâmetro (ajuste conforme necessário)
+	tamanhoDesejado := 8
+
+	// Converter para runes
+	runes := []rune(palavra)
+
+	// Embaralhar as runes
+	rand.Shuffle(len(runes), func(i, j int) {
+		runes[i], runes[j] = runes[j], runes[i]
+	})
+
+	// Pegar apenas um subconjunto das runes embaralhadas
+	if len(runes) > tamanhoDesejado {
+		runes = runes[:tamanhoDesejado]
+	}
+
+	// Usar as runes selecionadas como nome do parâmetro e um número aleatório como valor
+	return string(runes) + "=" + strconv.Itoa(rand.Intn(99999))
 }
 
 func addCacheBusterToURL(url string) string {
