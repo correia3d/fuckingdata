@@ -29,7 +29,7 @@ import (
 )
 
 func generateCacheBuster() string {
-	return "plseno=" + strconv.FormatInt(time.Now().UnixNano(), 10) + strconv.Itoa(rand.Intn(11514))
+	return "heya=" + strconv.FormatInt(time.Now().UnixNano(), 10) + strconv.Itoa(rand.Intn(11514))
 }
 
 func addCacheBusterToURL(url string) string {
@@ -1366,10 +1366,6 @@ func TibiaDataUserAgentGenerator(version int) string {
 
 // TibiaDataHTMLDataCollector func
 func TibiaDataHTMLDataCollector(TibiaDataRequest TibiaDataRequestStruct) (string, error) {
-	// Adiciona um pequeno delay aleatório entre 50ms e 200ms
-	randomDelay := time.Duration(50+rand.Intn(150)) * time.Millisecond
-	time.Sleep(randomDelay)
-
 	// Setting up resty client
 	client := resty.New()
 
@@ -1379,25 +1375,14 @@ func TibiaDataHTMLDataCollector(TibiaDataRequest TibiaDataRequestStruct) (string
 		client.EnableTrace()
 	}
 
-	// Set client timeout and retry
+	// Set client timeout  and retry
 	client.SetTimeout(5 * time.Second)
 	client.SetRetryCount(2)
 
-	// Set headers for all requests - cabeçalhos realistas para parecer navegador normal
+	// Set headers for all requests
 	client.SetHeaders(map[string]string{
-		"Content-Type":              "application/json",
-		"User-Agent":                TibiaDataUserAgent,
-		"Accept":                    "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
-		"Accept-Language":           "pt-BR,pt;q=0.8,en-US;q=0.5,en;q=0.3",
-		"Accept-Encoding":           "gzip, deflate, br",
-		"DNT":                       "1",
-		"Connection":                "keep-alive",
-		"Upgrade-Insecure-Requests": "1",
-		"Sec-Fetch-Dest":            "document",
-		"Sec-Fetch-Mode":            "navigate",
-		"Sec-Fetch-Site":            "none",
-		"Sec-Fetch-User":            "?1",
-		"Cache-Control":             "max-age=0",
+		"Content-Type": "application/json",
+		"User-Agent":   TibiaDataUserAgent,
 	})
 
 	// Enabling Content length value for all request
