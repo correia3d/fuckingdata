@@ -23,7 +23,7 @@ RUN go mod download && \
   " -o app ./src/
 
 # get alpine container
-FROM alpine:3.21.3 AS app
+FROM alpine:3.22.0 AS app
 
 # create workdir
 WORKDIR /opt/app
